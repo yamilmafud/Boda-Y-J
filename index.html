@@ -155,9 +155,10 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 /* Responsive */
 @media(max-width:768px){
   .mob-header{display:flex!important}
-  .sidebar{display:none;position:fixed!important;top:52px;left:0;width:250px!important;height:calc(100vh - 52px)!important;box-shadow:4px 0 20px rgba(0,0,0,0.1)}
+  .app{flex-direction:column!important}
+  .sidebar{display:none!important;position:fixed!important;top:52px;left:0;width:250px!important;height:calc(100vh - 52px)!important;box-shadow:4px 0 20px rgba(0,0,0,0.1);z-index:200}
   .sidebar.open{display:flex!important}
-  .main{padding:16px 12px!important}
+  .main{padding:16px 12px!important;width:100%!important;max-width:100%!important}
   
   /* Hero */
   .hero{padding:24px 18px;margin-bottom:20px;border-radius:16px}
@@ -289,12 +290,12 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 <div id="app" class="app hidden">
   
   <!-- Mobile Header -->
-  <div class="mob-header" style="display:none">
-    <div style="display:flex;align-items:center;gap:10">
+  <div class="mob-header">
+    <div style="display:flex;align-items:center;gap:10px">
       <svg width="34" height="34" viewBox="0 0 120 120"><defs><linearGradient id="mg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="52" fill="none" stroke="url(#mg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#mg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#mg)" text-anchor="middle">J</text></svg>
       <span style="font-family:var(--ffs);font-size:17px;font-weight:600">Y & J</span>
     </div>
-    <div style="display:flex;align-items:center;gap:10">
+    <div style="display:flex;align-items:center;gap:10px">
       <span id="mob-save" class="hidden" style="font-size:11px;color:var(--green)">💾</span>
       <button onclick="toggleMobMenu()" style="background:none;border:none;cursor:pointer;font-size:24px">☰</button>
     </div>
