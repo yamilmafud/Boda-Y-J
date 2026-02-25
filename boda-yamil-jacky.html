@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Y & J — Nuestra Boda</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#FAF6F1;--card:#fff;--card2:#FFFBF7;--border:#EDE6DD;--border2:#E0D5C8;
+  --gold:#C4956A;--gold2:#A67B5B;--goldL:#D4B896;--goldBg:#C4956A12;
+  --text:#3D2B1F;--text2:#8B7355;--text3:#A0917E;--green:#6B8F71;--red:#C0392B;--blue:#5B8DBE;--yellow:#E8A838;
+  --ff:'DM Sans',sans-serif;--ffs:'Cormorant Garamond',serif;
+}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh}
+button{font-family:var(--ff);cursor:pointer}
+input,select,textarea{font-family:var(--ff);color:var(--text)}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--card2);border-right:1px solid var(--border);padding:24px 0;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;z-index:10}
+.main{flex:1;padding:28px 32px;max-width:960px;margin:0 auto}
+.mob-header{display:none;position:sticky;top:0;z-index:100;background:var(--card2);border-bottom:1px solid var(--border);padding:10px 16px;align-items:center;justify-content:space-between}
+
+/* Logo */
+.logo-area{padding:0 20px;margin-bottom:28px;text-align:center}
+.logo-name{font-family:var(--ffs);font-size:16px;font-weight:600;margin-top:8px}
+.logo-days{font-size:11px;color:var(--gold);font-weight:500;letter-spacing:0.1em;margin-top:2px}
+.logo-line{width:60%;height:1px;background:linear-gradient(90deg,transparent,var(--goldL),transparent);margin:12px auto 0}
+
+/* Nav */
+.nav-btn{display:flex;align-items:center;gap:12px;width:100%;padding:11px 22px;border:none;background:transparent;color:var(--text2);font-size:14px;font-weight:500;border-left:3px solid transparent;transition:all 0.2s}
+.nav-btn:hover{background:var(--goldBg)}
+.nav-btn.active{background:linear-gradient(90deg,var(--goldBg),transparent);color:var(--gold);font-weight:600;border-left-color:var(--gold)}
+
+/* Cards */
+.card{background:var(--card);border-radius:14px;padding:20px 22px;border:1px solid var(--border);margin-bottom:16px}
+.card-title{font-family:var(--ffs);font-size:19px;color:var(--text);margin:0 0 14px}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#3D2B1F,#5C3D2E,#6B4C3B);border-radius:20px;padding:44px 32px;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;right:0;width:280px;height:280px;background:radial-gradient(circle,rgba(196,149,106,0.15),transparent 70%);border-radius:50%}
+.hero-content{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;flex-wrap:wrap;gap:20px}
+.hero h1{font-family:var(--ffs);font-size:30px;font-weight:600;color:#F5EDE4;line-height:1.1}
+.hero h1 span{color:#C4A882;font-style:italic;font-weight:400}
+.hero-sub{color:#C4A882;font-size:13px;margin-top:6px}
+.countdown{text-align:center;min-width:120px}
+.countdown-num{font-size:56px;font-weight:700;font-family:var(--ffs);color:#F5EDE4;line-height:1}
+.countdown-label{font-size:12px;color:#C4A882;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px}
+
+/* Stats */
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px}
+.stat{background:var(--card);border-radius:14px;padding:18px 20px;border:1px solid var(--border);flex:1 1 170px;min-width:155px}
+.stat-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
+.stat-val{font-size:26px;font-weight:700;color:var(--text);font-family:var(--ffs);line-height:1}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:5px}
+
+/* Progress */
+.bar{background:var(--border);border-radius:8px;height:8px;overflow:hidden;width:100%}
+.bar-fill{height:100%;border-radius:8px;transition:width 0.5s ease}
+
+/* Buttons */
+.btn-p{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(166,123,91,0.3)}
+.btn-p:hover{opacity:0.9}
+.btn-s{background:transparent;color:var(--gold2);border:1.5px solid var(--border2);border-radius:10px;padding:9px 18px;font-size:14px;font-weight:600}
+.btn-sm{padding:7px 14px;font-size:13px}
+.btn-icon{background:none;border:1px solid var(--border2);border-radius:8px;padding:6px;display:inline-flex;align-items:center;justify-content:center}
+.btn-icon:hover{background:var(--goldBg)}
+.btn-add{display:flex;align-items:center;gap:6px}
+
+/* Forms */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.06em}
+.inp{width:100%;padding:10px 14px;border:1.5px solid var(--border2);border-radius:8px;font-size:14px;background:#fff;outline:none;box-sizing:border-box}
+.inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,149,106,0.12)}
+textarea.inp{min-height:50px;resize:vertical}
+select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238B7355' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.check-label{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:16px;cursor:pointer}
+.check-label input{accent-color:var(--gold)}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(45,30,25,0.45);backdrop-filter:blur(6px)}
+.modal{background:var(--card2);border-radius:16px;padding:28px 32px;max-width:540px;width:92%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(45,30,25,0.2);border:1px solid #E8DDD4}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-head h3{font-family:var(--ffs);font-size:22px;margin:0}
+.modal-close{background:none;border:none;color:var(--text2);padding:4px;font-size:20px}
+
+/* Items */
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #F3ECE4;flex-wrap:wrap;gap:8px}
+.item-main{font-size:15px;font-weight:600;color:var(--text)}
+.item-sub{font-size:13px;color:var(--text2)}
+.item-extra{font-size:12px;color:var(--green);margin-top:2px}
+.item-cost{font-size:16px;font-weight:700;font-family:var(--ffs)}
+.badge{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;display:inline-block}
+
+/* Task items */
+.task-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:8px}
+.task-check{width:24px;height:24px;border-radius:7px;border:2px solid var(--border2);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.task-check.done{border-color:var(--green);background:var(--green);color:#fff}
+.task-item.overdue{border-color:rgba(192,57,43,0.2)}
+
+/* Guest row */
+.guest-row{background:var(--card);border-radius:12px;padding:14px 18px;border:1px solid var(--border);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+
+/* Vendor card */
+.vendor-card{background:var(--card);border-radius:14px;padding:18px 22px;border:1px solid var(--border);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+
+/* Filters */
+.filter-btn{padding:5px 14px;border-radius:20px;border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13px;font-weight:600}
+.filter-btn.active{border-color:var(--gold);background:var(--goldBg);color:var(--gold)}
+
+/* RSVP select */
+.rsvp{padding:4px 10px;border-radius:16px;border:none;font-size:12px;font-weight:600;cursor:pointer}
+
+/* HM Hero */
+.hm-hero{background:linear-gradient(135deg,#1a3a4a,#2d5a5a,#3a6b5a);border-radius:20px;padding:30px 28px;margin-bottom:24px;position:relative;overflow:hidden}
+.hm-hero::before{content:'✈';position:absolute;top:-20px;right:-20px;font-size:100px;opacity:0.06}
+
+/* Sidebar bottom */
+.sidebar-footer{padding:0 18px}
+.sidebar-note{background:#F5EDE4;border-radius:12px;padding:14px;text-align:center;font-size:12px;color:var(--text2);font-family:var(--ffs);font-style:italic}
+.save-indicator{text-align:center;font-size:12px;color:var(--green);margin-bottom:8px}
+
+/* Setup screen */
+.setup{max-width:600px;margin:60px auto;text-align:center;padding:20px}
+.setup h1{font-family:var(--ffs);font-size:36px;margin-bottom:10px}
+.setup p{color:var(--text2);margin-bottom:30px}
+.setup textarea{width:100%;min-height:200px;font-family:monospace;font-size:13px;padding:16px;border:2px solid var(--border2);border-radius:12px;margin-bottom:20px}
+.setup .btn-p{width:100%;padding:14px;font-size:16px}
+.steps{text-align:left;margin:30px 0;background:var(--card);border-radius:14px;padding:24px;border:1px solid var(--border)}
+.steps h3{margin-bottom:16px;font-family:var(--ffs)}
+.steps ol{padding-left:20px;line-height:2}
+.steps a{color:var(--gold);font-weight:600}
+.steps code{background:#F5EDE4;padding:2px 8px;border-radius:4px;font-size:13px}
+
+/* Checklist item */
+.checklist-item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #F3ECE4}
+.checklist-btn{width:22px;height:22px;border-radius:6px;border:2px solid var(--border2);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.checklist-btn.done{border-color:var(--green);background:var(--green)}
+
+/* Scroll */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:var(--goldL);border-radius:3px}
+
+/* Responsive */
+@media(max-width:768px){
+  .mob-header{display:flex!important}
+  .sidebar{display:none;position:fixed!important;top:52px;left:0;width:250px!important;height:calc(100vh - 52px)!important;box-shadow:4px 0 20px rgba(0,0,0,0.1)}
+  .sidebar.open{display:flex!important}
+  .main{padding:18px 14px!important}
+  .hero{padding:28px 20px}
+  .hero h1{font-size:24px}
+  .countdown-num{font-size:42px}
+  .row2,.row3{grid-template-columns:1fr}
+}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ═══ SETUP SCREEN ═══ -->
+<div id="setup-screen" class="setup hidden">
+  <svg width="80" height="80" viewBox="0 0 120 120"><defs><linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#E8CBA8" stroke-width="0.6"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#sg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#sg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#sg)" text-anchor="middle">J</text><line x1="26" y1="80" x2="54" y2="80" stroke="url(#sg)" stroke-width="0.5"/><circle cx="60" cy="80" r="1.2" fill="#C4956A"/><line x1="66" y1="80" x2="94" y2="80" stroke="url(#sg)" stroke-width="0.5"/></svg>
+  <h1>Yamil & Jacky</h1>
+  <p>Para que ambos puedan usar esta plataforma, necesitamos conectar Firebase (gratis).</p>
+  
+  <div class="steps">
+    <h3>📋 Configuración (10 min)</h3>
+    <ol>
+      <li>Ve a <a href="https://console.firebase.google.com/" target="_blank">console.firebase.google.com</a></li>
+      <li>Crea un proyecto nuevo (ponle "Boda-YJ" o lo que quieras)</li>
+      <li>En el panel, ve a <strong>Build → Realtime Database → Create Database</strong></li>
+      <li>Elige ubicación y selecciona <strong>"Start in test mode"</strong></li>
+      <li>Ve a <strong>⚙ Project Settings</strong> → abajo en "Your apps" → click en <strong>&lt;/&gt;</strong> (Web)</li>
+      <li>Registra la app (ponle cualquier nombre) y copia el bloque <code>firebaseConfig</code></li>
+      <li>Pega aquí abajo el objeto completo:</li>
+    </ol>
+  </div>
+  
+  <textarea id="firebase-config" placeholder='Pega aquí tu firebaseConfig, ejemplo:
+{
+  apiKey: "AIzaSyC...",
+  authDomain: "boda-yj.firebaseapp.com",
+  databaseURL: "https://boda-yj-default-rtdb.firebaseio.com",
+  projectId: "boda-yj",
+  storageBucket: "boda-yj.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123:web:abc123"
+}'></textarea>
+  <button class="btn-p" onclick="connectFirebase()">🔗 Conectar y Empezar</button>
+  <p style="margin-top:16px;font-size:13px;color:var(--text3)">La configuración se guarda en tu navegador. Solo necesitas hacerlo una vez.</p>
+</div>
+
+<!-- ═══ LOADING ═══ -->
+<div id="loading-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px">
+  <svg width="80" height="80" viewBox="0 0 120 120"><defs><linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#E8CBA8" stroke-width="0.6"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#lg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#lg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#lg)" text-anchor="middle">J</text><line x1="26" y1="80" x2="54" y2="80" stroke="url(#lg)" stroke-width="0.5"/><circle cx="60" cy="80" r="1.2" fill="#C4956A"/><line x1="66" y1="80" x2="94" y2="80" stroke="url(#lg)" stroke-width="0.5"/></svg>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:22px">Cargando...</div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="app" class="app hidden">
+  
+  <!-- Mobile Header -->
+  <div class="mob-header" style="display:none">
+    <div style="display:flex;align-items:center;gap:10">
+      <svg width="34" height="34" viewBox="0 0 120 120"><defs><linearGradient id="mg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="52" fill="none" stroke="url(#mg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#mg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#mg)" text-anchor="middle">J</text></svg>
+      <span style="font-family:var(--ffs);font-size:17px;font-weight:600">Y & J</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10">
+      <span id="mob-save" class="hidden" style="font-size:11px;color:var(--green)">💾</span>
+      <button onclick="toggleMobMenu()" style="background:none;border:none;cursor:pointer;font-size:24px">☰</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-area">
+      <svg width="68" height="68" viewBox="0 0 120 120"><defs><linearGradient id="slg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#E8CBA8" stroke-width="0.6"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#slg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#slg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#slg)" text-anchor="middle">J</text><line x1="26" y1="80" x2="54" y2="80" stroke="url(#slg)" stroke-width="0.5"/><circle cx="60" cy="80" r="1.2" fill="#C4956A"/><line x1="66" y1="80" x2="94" y2="80" stroke="url(#slg)" stroke-width="0.5"/></svg>
+      <div class="logo-name">Yamil & Jacky</div>
+      <div class="logo-days" id="sidebar-days"></div>
+      <div class="logo-line"></div>
+    </div>
+    <nav id="nav" style="flex:1"></nav>
+    <div class="sidebar-footer">
+      <div id="save-ind" class="save-indicator hidden">💾 Guardando...</div>
+      <div class="sidebar-note">Datos compartidos — ambos pueden editar ✨</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" id="content"></main>
+</div>
+
+<!-- ═══ MODAL CONTAINER ═══ -->
+<div id="modal-container"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA & STATE
+// ═══════════════════════════════════════════
+let db = null;
+let DATA = {
+  couple:{name1:"Yamil",name2:"Jacky"},
+  weddingDate:"2026-03-14",weddingVenue:"Por definir",budget:350000,
+  vendors:[],guests:[],
+  tasks:[
+    {id:1,text:"Definir fecha de la boda",done:true,dueDate:"2025-06-01",category:"General"},
+    {id:2,text:"Elegir venue / salón",done:false,dueDate:"2025-08-01",category:"Venue"},
+    {id:3,text:"Contratar fotógrafo",done:false,dueDate:"2025-09-01",category:"Proveedores"},
+    {id:4,text:"Elegir vestido de novia",done:false,dueDate:"2025-10-01",category:"Vestimenta"},
+    {id:5,text:"Enviar invitaciones",done:false,dueDate:"2026-01-15",category:"Invitaciones"},
+    {id:6,text:"Prueba de menú",done:false,dueDate:"2026-02-01",category:"Banquete"},
+  ],
+  payments:[],
+  honeymoon:{destination:"",startDate:"",endDate:"",budget:80000,notes:"",flights:[],hotels:[],activities:[],
+    documents:[
+      {id:1,item:"Pasaportes vigentes",done:false},{id:2,item:"Visa (si aplica)",done:false},
+      {id:3,item:"Seguro de viaje",done:false},{id:4,item:"Reservación de vuelos",done:false},
+      {id:5,item:"Reservación de hotel",done:false},{id:6,item:"Vacunas necesarias",done:false},
+    ]
+  }
+};
+
+let currentTab = "dashboard";
+let guestFilter = "Todos";
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+const fmt = n => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN",minimumFractionDigits:0}).format(n||0);
+const fmtD = d => { if(!d) return "—"; return new Date(d+"T12:00:00").toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"}); };
+const nid = a => (a&&a.length ? Math.max(...a.map(i=>i.id))+1 : 1);
+const dTo = ds => { if(!ds) return 0; return Math.ceil((new Date(ds+"T12:00:00")-new Date())/864e5); };
+const bar = (v,m,color) => { const p=m>0?Math.min(v/m*100,100):0; return `<div class="bar"><div class="bar-fill" style="width:${p}%;background:${color||'var(--gold)'}"></div></div>`; };
+
+function saveData() {
+  if(!db) return;
+  document.getElementById("save-ind").classList.remove("hidden");
+  const mi = document.getElementById("mob-save");
+  if(mi) mi.classList.remove("hidden");
+  db.ref("wedding").set(DATA).then(()=>{
+    setTimeout(()=>{
+      document.getElementById("save-ind").classList.add("hidden");
+      if(mi) mi.classList.add("hidden");
+    },800);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  FIREBASE INIT
+// ═══════════════════════════════════════════
+function tryInit() {
+  const saved = localStorage.getItem("yj-firebase-config");
+  if(!saved) {
+    document.getElementById("loading-screen").classList.add("hidden");
+    document.getElementById("setup-screen").classList.remove("hidden");
+    return;
+  }
+  try {
+    const config = JSON.parse(saved);
+    firebase.initializeApp(config);
+    db = firebase.database();
+    
+    db.ref("wedding").on("value", snap => {
+      const val = snap.val();
+      if(val) {
+        DATA = {...DATA, ...val};
+        // Ensure arrays
+        ["vendors","guests","tasks","payments"].forEach(k => { if(!Array.isArray(DATA[k])) DATA[k]=[]; });
+        if(!DATA.honeymoon) DATA.honeymoon = {destination:"",startDate:"",endDate:"",budget:80000,notes:"",flights:[],hotels:[],activities:[],documents:[]};
+        ["flights","hotels","activities","documents"].forEach(k => { if(!Array.isArray(DATA.honeymoon[k])) DATA.honeymoon[k]=[]; });
+      } else {
+        saveData(); // Init with defaults
+      }
+      document.getElementById("loading-screen").classList.add("hidden");
+      document.getElementById("app").classList.remove("hidden");
+      render();
+    });
+  } catch(e) {
+    alert("Error al conectar Firebase: " + e.message + "\nRevisa tu configuración.");
+    localStorage.removeItem("yj-firebase-config");
+    location.reload();
+  }
+}
+
+function connectFirebase() {
+  const raw = document.getElementById("firebase-config").value.trim();
+  if(!raw) return alert("Pega tu configuración de Firebase");
+  try {
+    let clean = raw;
+    // Remove variable declaration if present
+    if(clean.startsWith("const ") || clean.startsWith("var ") || clean.startsWith("let ")) {
+      clean = clean.replace(/^(const|var|let)\s+\w+\s*=\s*/, "");
+    }
+    if(clean.endsWith(";")) clean = clean.slice(0,-1);
+    // Replace single quotes with double
+    clean = clean.replace(/'/g, '"');
+    // Add quotes to unquoted keys (but not inside values like URLs)
+    clean = clean.replace(/^\s*(\w+)\s*:/gm, '"$1":');
+    clean = clean.replace(/,\s*(\w+)\s*:/g, ',"$1":');
+    const config = JSON.parse(clean);
+    if(!config.databaseURL && !config.projectId) throw new Error("Configuración incompleta - falta databaseURL o projectId");
+    localStorage.setItem("yj-firebase-config", JSON.stringify(config));
+    location.reload();
+  } catch(e) {
+    alert("No pude leer la configuración. Asegúrate de copiar todo el objeto firebaseConfig.\n\nError: " + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  RENDER ENGINE
+// ═══════════════════════════════════════════
+const TABS = [
+  {id:"dashboard",label:"Inicio",icon:"⊞"},
+  {id:"vendors",label:"Proveedores",icon:"🏠"},
+  {id:"guests",label:"Invitados",icon:"👥"},
+  {id:"budget",label:"Presupuesto",icon:"💰"},
+  {id:"tasks",label:"Tareas",icon:"✓"},
+  {id:"honeymoon",label:"Honey Moon",icon:"✈"},
+];
+
+function toggleMobMenu() {
+  document.getElementById("sidebar").classList.toggle("open");
+}
+
+function switchTab(id) {
+  currentTab = id;
+  document.getElementById("sidebar").classList.remove("open");
+  render();
+}
+
+function render() {
+  const daysLeft = dTo(DATA.weddingDate);
+  
+  // Sidebar nav
+  document.getElementById("sidebar-days").textContent = daysLeft > 0 ? `${daysLeft} días` : "¡Hoy!";
+  document.getElementById("nav").innerHTML = TABS.map(t => 
+    `<button class="nav-btn ${currentTab===t.id?'active':''}" onclick="switchTab('${t.id}')">${t.icon} ${t.label}</button>`
+  ).join("");
+  
+  // Content
+  const views = {dashboard:renderDashboard,vendors:renderVendors,guests:renderGuests,budget:renderBudget,tasks:renderTasks,honeymoon:renderHoneymoon};
+  document.getElementById("content").innerHTML = views[currentTab]();
+}
+
+// ═══════════════════════════════════════════
+//  VIEWS
+// ═══════════════════════════════════════════
+function renderDashboard() {
+  const d = DATA;
+  const daysLeft = dTo(d.weddingDate);
+  const totalCost = (d.vendors||[]).reduce((s,v)=>s+(v.cost||0),0);
+  const totalPaid = (d.payments||[]).reduce((s,p)=>s+(p.amount||0),0);
+  const confirmed = (d.guests||[]).filter(g=>g.rsvp==="Confirmado").length;
+  const tasksDone = (d.tasks||[]).filter(t=>t.done).length;
+  const pending = (d.tasks||[]).filter(t=>!t.done).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate)).slice(0,5);
+  
+  return `
+    <div class="hero">
+      <div class="hero-content">
+        <div style="display:flex;align-items:center;gap:20px">
+          <svg width="90" height="90" viewBox="0 0 120 120"><defs><linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#E8CBA890" stroke-width="0.6"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#hg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#hg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#hg)" text-anchor="middle">J</text><line x1="26" y1="80" x2="54" y2="80" stroke="url(#hg)" stroke-width="0.5"/><circle cx="60" cy="80" r="1.2" fill="#C4956A"/><line x1="66" y1="80" x2="94" y2="80" stroke="url(#hg)" stroke-width="0.5"/></svg>
+          <div>
+            <h1>${d.couple.name1} <span>&</span> ${d.couple.name2}</h1>
+            <p class="hero-sub">📅 ${fmtD(d.weddingDate)} · 📍 ${d.weddingVenue}</p>
+          </div>
+        </div>
+        <div class="countdown">
+          <div class="countdown-num">${daysLeft>0?daysLeft:"🎉"}</div>
+          <div class="countdown-label">${daysLeft>0?"días para el gran día":"¡Felicidades!"}</div>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Presupuesto</div><div class="stat-val">${fmt(totalCost)}</div><div class="stat-sub">de ${fmt(d.budget)}</div></div>
+      <div class="stat"><div class="stat-label">Pagado</div><div class="stat-val">${fmt(totalPaid)}</div><div class="stat-sub">${totalCost?Math.round(totalPaid/totalCost*100):0}% del total</div></div>
+      <div class="stat"><div class="stat-label">Invitados</div><div class="stat-val">${confirmed}/${(d.guests||[]).length}</div><div class="stat-sub">${(d.guests||[]).length-confirmed} pendientes</div></div>
+      <div class="stat"><div class="stat-label">Tareas</div><div class="stat-val">${tasksDone}/${(d.tasks||[]).length}</div><div class="stat-sub">${Math.round(tasksDone/Math.max((d.tasks||[]).length,1)*100)}%</div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;font-weight:600">Gasto vs Presupuesto</span><span style="font-size:13px;color:${totalCost>d.budget?'var(--red)':'var(--green)'};font-weight:600">${totalCost>d.budget?'⚠ Sobre presupuesto':fmt(d.budget-totalCost)+' disponible'}</span></div>
+      ${bar(totalCost,d.budget,totalCost>d.budget?'var(--red)':'var(--gold)')}
+    </div>
+    <div class="card">
+      <h3 class="card-title">Próximas Tareas</h3>
+      ${pending.map(t=>`
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3ECE4">
+          <button class="task-check" onclick="toggleTask(${t.id})"></button>
+          <div style="flex:1"><div style="font-size:14px">${t.text}</div><div style="font-size:12px;color:var(--text3)">${fmtD(t.dueDate)} · ${t.category}</div></div>
+        </div>
+      `).join("")}
+      ${pending.length===0?'<p style="color:var(--text3);font-size:14px">¡Todo completado! 🎉</p>':""}
+    </div>
+  `;
+}
+
+function renderVendors() {
+  const vs = DATA.vendors||[];
+  const stC = {Cotizando:"var(--yellow)",Contratado:"var(--blue)",Pagado:"var(--green)",Cancelado:"var(--red)"};
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <h2 style="font-family:var(--ffs);font-size:26px;margin:0">Proveedores</h2>
+      <button class="btn-p btn-add" onclick="openModal('vendor')">+ Nuevo</button>
+    </div>
+    ${vs.map(v=>`
+      <div class="vendor-card">
+        <div style="flex:1 1 220px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+            <span style="font-size:16px;font-weight:600">${v.name}</span>
+            <span class="badge" style="background:${stC[v.status]}18;color:${stC[v.status]}">${v.status}</span>
+            ${v.contract?'<span class="badge" style="background:var(--green)18;color:var(--green)">📄</span>':""}
+          </div>
+          <div style="font-size:13px;color:var(--text2)">${v.category}${v.phone?' · '+v.phone:''}</div>
+          ${v.notes?'<div style="font-size:12px;color:var(--text3);margin-top:3px">'+v.notes+'</div>':""}
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="font-size:18px;font-weight:700;font-family:var(--ffs)">${fmt(v.cost)}</span>
+          <button class="btn-icon" style="color:var(--text2)" onclick='openModal("vendor",${JSON.stringify(v).replace(/'/g,"\\'")})'><small>✏️</small></button>
+          <button class="btn-icon" style="color:var(--red)" onclick="removeItem('vendors',${v.id})"><small>🗑</small></button>
+        </div>
+      </div>
+    `).join("")}
+    ${vs.length===0?'<p style="color:var(--text3);text-align:center;padding:40px">No hay proveedores. ¡Agrega el primero!</p>':""}
+  `;
+}
+
+function renderGuests() {
+  const gs = DATA.guests||[];
+  const groups = ["Todos",...new Set(gs.map(g=>g.group))];
+  const filtered = guestFilter==="Todos"?gs:gs.filter(g=>g.group===guestFilter);
+  const confirmed = gs.filter(g=>g.rsvp==="Confirmado").length;
+  const rvC = {Pendiente:"var(--yellow)",Confirmado:"var(--green)",Declinado:"var(--red)","Sin respuesta":"var(--text2)"};
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div><h2 style="font-family:var(--ffs);font-size:26px;margin:0 0 4px">Invitados</h2><p style="font-size:13px;color:var(--text2);margin:0">${confirmed} confirmados · ${gs.filter(g=>g.plusOne).length} +1</p></div>
+      <button class="btn-p btn-add" onclick="openModal('guest')">+ Nuevo</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      ${groups.map(g=>`<button class="filter-btn ${guestFilter===g?'active':''}" onclick="guestFilter='${g}';render()">${g}</button>`).join("")}
+    </div>
+    ${filtered.map(g=>`
+      <div class="guest-row">
+        <div style="flex:1"><span style="font-size:15px;font-weight:500">${g.name}</span><span style="font-size:12px;color:var(--text2);margin-left:8px">${g.group}${g.table?' · '+g.table:''}${g.plusOne?' · +1':''}${g.dietary?' · '+g.dietary:''}</span></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select class="rsvp" style="background:${rvC[g.rsvp]}16;color:${rvC[g.rsvp]}" onchange="updateGuest(${g.id},this.value)">${["Pendiente","Confirmado","Declinado","Sin respuesta"].map(r=>`<option ${g.rsvp===r?'selected':''}>${r}</option>`).join("")}</select>
+          <button class="btn-icon" style="color:var(--text2)" onclick='openModal("guest",${JSON.stringify(g).replace(/'/g,"\\'")})'><small>✏️</small></button>
+          <button class="btn-icon" style="color:var(--red)" onclick="removeItem('guests',${g.id})"><small>🗑</small></button>
+        </div>
+      </div>
+    `).join("")}
+    ${filtered.length===0?'<p style="color:var(--text3);text-align:center;padding:40px">No hay invitados.</p>':""}
+  `;
+}
+
+function renderBudget() {
+  const totalCost=(DATA.vendors||[]).reduce((s,v)=>s+(v.cost||0),0);
+  const totalPaid=(DATA.payments||[]).reduce((s,p)=>s+(p.amount||0),0);
+  const vp=(DATA.vendors||[]).map(v=>({...v,tp:(DATA.payments||[]).filter(p=>p.vendor===v.name).reduce((s,p)=>s+p.amount,0)}));
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div><h2 style="font-family:var(--ffs);font-size:26px;margin:0 0 4px">Presupuesto y Pagos</h2><p style="font-size:13px;color:var(--text2);margin:0">Total: ${fmt(DATA.budget)} · Comprometido: ${fmt(totalCost)} · Pagado: ${fmt(totalPaid)}</p></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-p btn-add" onclick="openModal('payment')">+ Pago</button>
+        <button class="btn-s" onclick="openModal('budget-edit')">Editar</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="card-title" style="font-size:18px">Desglose por Proveedor</h3>
+      ${vp.map(v=>`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:14px"><span style="font-weight:500">${v.name}</span><span style="color:var(--green);font-weight:600">${fmt(v.tp)} / ${fmt(v.cost)}</span></div>${bar(v.tp,v.cost,'var(--green)')}${v.cost-v.tp>0?`<div style="font-size:12px;color:var(--red);margin-top:3px">Pendiente: ${fmt(v.cost-v.tp)}</div>`:""}</div>`).join("")}
+      ${vp.length===0?'<p style="color:var(--text3);font-size:14px">Agrega proveedores primero.</p>':""}
+    </div>
+    <div class="card">
+      <h3 class="card-title" style="font-size:18px">Historial de Pagos</h3>
+      ${(DATA.payments||[]).sort((a,b)=>new Date(b.date)-new Date(a.date)).map(p=>`
+        <div class="item-row">
+          <div><div class="item-main" style="font-size:14px">${p.vendor}</div><div class="item-sub" style="font-size:12px">${fmtD(p.date)} · ${p.method}${p.concept?' · '+p.concept:''}</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="item-cost">${fmt(p.amount)}</span><button class="btn-icon" style="color:var(--red)" onclick="removeItem('payments',${p.id})"><small>🗑</small></button></div>
+        </div>
+      `).join("")}
+      ${(DATA.payments||[]).length===0?'<p style="color:var(--text3);text-align:center;padding:20px">No hay pagos.</p>':""}
+    </div>
+  `;
+}
+
+function renderTasks() {
+  const tasks=DATA.tasks||[];
+  const pen=tasks.filter(t=>!t.done).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const done=tasks.filter(t=>t.done);
+  const tasksDone=done.length;
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div><h2 style="font-family:var(--ffs);font-size:26px;margin:0 0 4px">Tareas</h2><p style="font-size:13px;color:var(--text2);margin:0">${tasksDone} de ${tasks.length}</p></div>
+      <button class="btn-p btn-add" onclick="openModal('task')">+ Nueva</button>
+    </div>
+    ${bar(tasksDone,tasks.length,'var(--green)')}
+    <div style="margin-top:20px">
+      ${pen.map(t=>{const ov=t.dueDate&&new Date(t.dueDate+"T23:59:59")<new Date();return`
+        <div class="task-item${ov?' overdue':''}">
+          <button class="task-check" onclick="toggleTask(${t.id})"></button>
+          <div style="flex:1"><div style="font-size:14px;font-weight:500">${t.text}</div><div style="font-size:12px;color:${ov?'var(--red)':'var(--text3)'}">${fmtD(t.dueDate)} ${ov?'⚠ Vencida':''} · ${t.category}</div></div>
+          <button class="btn-icon" style="color:var(--red);border:none;opacity:0.5" onclick="removeItem('tasks',${t.id})"><small>🗑</small></button>
+        </div>
+      `;}).join("")}
+    </div>
+    ${done.length>0?`<div style="margin-top:24px"><h3 style="font-family:var(--ffs);font-size:18px;color:var(--text3);margin:0 0 12px">Completadas (${done.length})</h3>
+      ${done.map(t=>`
+        <div class="task-item" style="opacity:0.7;background:#FAFAF7">
+          <button class="task-check done" onclick="toggleTask(${t.id})">✓</button>
+          <span style="font-size:14px;color:var(--text3);text-decoration:line-through;flex:1">${t.text}</span>
+          <button class="btn-icon" style="color:var(--red);border:none;opacity:0.4" onclick="removeItem('tasks',${t.id})"><small>🗑</small></button>
+        </div>
+      `).join("")}
+    </div>`:""}`
+}
+
+function renderHoneymoon() {
+  const hm=DATA.honeymoon||{};
+  const cF=(hm.flights||[]).reduce((s,f)=>s+(f.cost||0),0);
+  const cH=(hm.hotels||[]).reduce((s,h)=>s+(h.cost||0),0);
+  const cA=(hm.activities||[]).reduce((s,a)=>s+(a.cost||0),0);
+  const cT=cF+cH+cA;
+  const dc=(hm.documents||[]).filter(d=>d.done).length;
+  const dt=(hm.documents||[]).length;
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div><h2 style="font-family:var(--ffs);font-size:26px;margin:0 0 4px">Honey Moon 🌴</h2><p style="font-size:13px;color:var(--text2);margin:0">${hm.destination||"¡Hora de planear!"}${hm.startDate?' · '+fmtD(hm.startDate)+' → '+fmtD(hm.endDate):''}</p></div>
+      <button class="btn-s" onclick="openModal('hm-set')">⚙ Configurar</button>
+    </div>
+    <div class="hm-hero">
+      <div style="position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+        <div><div style="font-family:var(--ffs);font-size:26px;font-weight:600;color:#E8F0E8">${hm.destination||"Destino por definir"}</div>${hm.startDate?`<div style="font-size:13px;color:#A8C8B0">${fmtD(hm.startDate)} → ${fmtD(hm.endDate)}${dTo(hm.startDate)>0?' · Faltan '+dTo(hm.startDate)+' días':''}</div>`:""}</div>
+        <div style="text-align:center"><div style="font-size:12px;color:#A8C8B0;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">Presupuesto</div><div style="font-size:26px;font-weight:700;color:#E8F0E8;font-family:var(--ffs)">${fmt(hm.budget)}</div><div style="font-size:12px;color:${cT>hm.budget?'var(--yellow)':'#8BB898'}">Gastado: ${fmt(cT)}</div></div>
+      </div>
+      <div style="margin-top:14px;position:relative;z-index:1">${bar(cT,hm.budget,'#8BB898')}</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Vuelos</div><div class="stat-val">${fmt(cF)}</div><div class="stat-sub">${(hm.flights||[]).length} vuelo(s)</div></div>
+      <div class="stat"><div class="stat-label">Hospedaje</div><div class="stat-val">${fmt(cH)}</div><div class="stat-sub">${(hm.hotels||[]).length} hotel(es)</div></div>
+      <div class="stat"><div class="stat-label">Actividades</div><div class="stat-val">${fmt(cA)}</div><div class="stat-sub">${(hm.activities||[]).length}</div></div>
+      <div class="stat"><div class="stat-label">Checklist</div><div class="stat-val">${dc}/${dt}</div></div>
+    </div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 class="card-title" style="margin:0">✈️ Vuelos</h3><button class="btn-p btn-sm btn-add" onclick="openModal('hm-flight')">+ Agregar</button></div>
+      ${(hm.flights||[]).map(f=>`<div class="item-row"><div style="flex:1;min-width:170px"><div class="item-main">${f.from} → ${f.to}</div><div class="item-sub">${f.airline} · ${fmtD(f.date)}${f.time?' '+f.time:''}</div>${f.confirmation?'<div class="item-extra">Conf: '+f.confirmation+'</div>':''}</div><div style="display:flex;align-items:center;gap:10px"><span class="item-cost">${fmt(f.cost)}</span><button class="btn-icon" style="color:var(--text2)" onclick='openModal("hm-flight",${JSON.stringify(f).replace(/'/g,"\\'")})'><small>✏️</small></button><button class="btn-icon" style="color:var(--red)" onclick="removeHmItem('flights',${f.id})"><small>🗑</small></button></div></div>`).join("")}
+      ${(hm.flights||[]).length===0?'<p style="color:var(--text3);font-size:14px">No hay vuelos aún.</p>':""}
+    </div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 class="card-title" style="margin:0">🏨 Hospedaje</h3><button class="btn-p btn-sm btn-add" onclick="openModal('hm-hotel')">+ Agregar</button></div>
+      ${(hm.hotels||[]).map(h=>`<div class="item-row"><div style="flex:1;min-width:170px"><div class="item-main">${h.name}</div><div class="item-sub">${h.location?h.location+' · ':''}${fmtD(h.checkIn)} → ${fmtD(h.checkOut)}</div>${h.confirmation?'<div class="item-extra">Conf: '+h.confirmation+'</div>':''}</div><div style="display:flex;align-items:center;gap:10px"><span class="item-cost">${fmt(h.cost)}</span><button class="btn-icon" style="color:var(--text2)" onclick='openModal("hm-hotel",${JSON.stringify(h).replace(/'/g,"\\'")})'><small>✏️</small></button><button class="btn-icon" style="color:var(--red)" onclick="removeHmItem('hotels',${h.id})"><small>🗑</small></button></div></div>`).join("")}
+      ${(hm.hotels||[]).length===0?'<p style="color:var(--text3);font-size:14px">No hay hospedaje aún.</p>':""}
+    </div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 class="card-title" style="margin:0">🎯 Actividades</h3><button class="btn-p btn-sm btn-add" onclick="openModal('hm-activity')">+ Agregar</button></div>
+      ${(hm.activities||[]).map(a=>`<div class="item-row"><div style="flex:1;min-width:170px"><div style="display:flex;align-items:center;gap:8px"><span class="item-main">${a.name}</span>${a.booked?'<span class="badge" style="background:var(--green)18;color:var(--green)">Reservado</span>':''}</div><div class="item-sub">${a.location?a.location+' · ':''}${fmtD(a.date)}${a.time?' '+a.time:''}</div></div><div style="display:flex;align-items:center;gap:10px"><span class="item-cost">${fmt(a.cost)}</span><button class="btn-icon" style="color:var(--text2)" onclick='openModal("hm-activity",${JSON.stringify(a).replace(/'/g,"\\'")})'><small>✏️</small></button><button class="btn-icon" style="color:var(--red)" onclick="removeHmItem('activities',${a.id})"><small>🗑</small></button></div></div>`).join("")}
+      ${(hm.activities||[]).length===0?'<p style="color:var(--text3);font-size:14px">No hay actividades aún.</p>':""}
+    </div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 class="card-title" style="margin:0">📋 Checklist</h3><button class="btn-p btn-sm btn-add" onclick="openModal('hm-check')">+ Item</button></div>
+      ${bar(dc,dt,'var(--yellow)')}
+      <div style="margin-top:12px">
+        ${(hm.documents||[]).map(d=>`
+          <div class="checklist-item">
+            <button class="checklist-btn ${d.done?'done':''}" onclick="toggleDoc(${d.id})">${d.done?'✓':''}</button>
+            <span style="flex:1;font-size:14px;color:${d.done?'var(--text3)':'var(--text)'};text-decoration:${d.done?'line-through':'none'}">${d.item}</span>
+            <button class="btn-icon" style="border:none;color:var(--red);opacity:0.4" onclick="removeHmItem('documents',${d.id})"><small>🗑</small></button>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════
+function toggleTask(id) {
+  DATA.tasks = DATA.tasks.map(t=>t.id===id?{...t,done:!t.done}:t);
+  saveData(); render();
+}
+
+function removeItem(key,id) {
+  DATA[key] = (DATA[key]||[]).filter(i=>i.id!==id);
+  saveData(); render();
+}
+
+function updateGuest(id,rsvp) {
+  DATA.guests = DATA.guests.map(g=>g.id===id?{...g,rsvp}:g);
+  saveData(); render();
+}
+
+function toggleDoc(id) {
+  DATA.honeymoon.documents = DATA.honeymoon.documents.map(d=>d.id===id?{...d,done:!d.done}:d);
+  saveData(); render();
+}
+
+function removeHmItem(key,id) {
+  DATA.honeymoon[key] = (DATA.honeymoon[key]||[]).filter(i=>i.id!==id);
+  saveData(); render();
+}
+
+// ═══════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════
+function closeModal() { document.getElementById("modal-container").innerHTML = ""; }
+
+function openModal(type, item) {
+  const isEdit = !!item;
+  let title = "", body = "";
+  
+  const field = (label,name,val,type2,ph) => `<div class="field"><label>${label}</label><input class="inp" name="${name}" value="${val||''}" type="${type2||'text'}" placeholder="${ph||''}" ${name==='name'||name==='text'||name==='airline'||name==='from'||name==='to'||name==='item'?'required':''}></div>`;
+  const sel = (label,name,val,opts) => `<div class="field"><label>${label}</label><select class="inp" name="${name}">${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join("")}</select></div>`;
+  
+  if(type==="vendor") {
+    const v = item || {};
+    const cats = ["Banquete","Venue/Salón","Fotografía","Video","DJ/Música","Flores","Decoración","Pastel","Vestido","Traje","Invitaciones","Transporte","Iluminación","Coordinación","Maquillaje","Otro"];
+    title = isEdit?"Editar Proveedor":"Nuevo Proveedor";
+    body = `
+      ${field("Nombre","name",v.name)}
+      <div class="row2">${sel("Categoría","category",v.category||"Banquete",cats)}${sel("Estatus","status",v.status||"Cotizando",["Cotizando","Contratado","Pagado","Cancelado"])}</div>
+      <div class="row2">${field("Costo Total","cost",v.cost,"number")}${field("Teléfono","phone",v.phone)}</div>
+      <div class="field"><label>Notas</label><textarea class="inp" name="notes">${v.notes||''}</textarea></div>
+      <label class="check-label"><input type="checkbox" name="contract" ${v.contract?'checked':''}> Contrato firmado</label>
+    `;
+  } else if(type==="guest") {
+    const g = item || {};
+    title = isEdit?"Editar Invitado":"Nuevo Invitado";
+    body = `
+      ${field("Nombre completo","name",g.name)}
+      <div class="row2">${sel("Grupo","group",g.group||"Familia Novia",["Familia Novia","Familia Novio","Amigos Novia","Amigos Novio","Trabajo","Otro"])}${sel("RSVP","rsvp",g.rsvp||"Pendiente",["Pendiente","Confirmado","Declinado","Sin respuesta"])}</div>
+      <div class="row2">${field("Mesa","table",g.table,"text","Mesa 5")}${field("Dieta","dietary",g.dietary)}</div>
+      <label class="check-label"><input type="checkbox" name="plusOne" ${g.plusOne?'checked':''}> +1 Acompañante</label>
+    `;
+  } else if(type==="task") {
+    title = "Nueva Tarea";
+    body = `
+      ${field("Tarea","text","")}
+      <div class="row2">${field("Fecha límite","dueDate","","date")}${sel("Categoría","category","General",["General","Venue","Proveedores","Vestimenta","Invitaciones","Banquete","Decoración","Música","Legal","Luna de miel"])}</div>
+    `;
+  } else if(type==="payment") {
+    title = "Registrar Pago";
+    const today = new Date().toISOString().slice(0,10);
+    body = `
+      ${sel("Proveedor","vendor","",(DATA.vendors||[]).map(v=>v.name))}
+      <div class="row2">${field("Monto","amount","","number")}${field("Fecha","date",today,"date")}</div>
+      <div class="row2">${sel("Método","method","Transferencia",["Transferencia","Efectivo","Tarjeta Crédito","Tarjeta Débito","Cheque"])}${field("Concepto","concept","","text","Anticipo 50%")}</div>
+    `;
+  } else if(type==="budget-edit") {
+    title = "Editar Presupuesto";
+    body = `
+      ${field("Presupuesto Total","budget",DATA.budget,"number")}
+      ${field("Fecha de la Boda","weddingDate",DATA.weddingDate,"date")}
+      ${field("Venue","weddingVenue",DATA.weddingVenue)}
+      <div class="row2">${field("Nombre 1","name1",DATA.couple.name1)}${field("Nombre 2","name2",DATA.couple.name2)}</div>
+    `;
+  } else if(type==="hm-flight") {
+    const f = item || {};
+    title = isEdit?"Editar Vuelo":"Agregar Vuelo";
+    body = `
+      ${field("Aerolínea","airline",f.airline)}
+      <div class="row2">${field("Origen","from",f.from,"text","CDMX")}${field("Destino","to",f.to,"text","París")}</div>
+      <div class="row3">${field("Fecha","date",f.date,"date")}${field("Hora","time",f.time,"time")}${field("Costo","cost",f.cost,"number")}</div>
+      <div class="row2">${field("No. vuelo","flightNum",f.flightNum)}${field("Confirmación","confirmation",f.confirmation)}</div>
+    `;
+  } else if(type==="hm-hotel") {
+    const h = item || {};
+    title = isEdit?"Editar Hospedaje":"Agregar Hospedaje";
+    body = `
+      ${field("Hotel","name",h.name)}
+      ${field("Ubicación","location",h.location)}
+      <div class="row2">${field("Check-in","checkIn",h.checkIn,"date")}${field("Check-out","checkOut",h.checkOut,"date")}</div>
+      <div class="row2">${field("Costo","cost",h.cost,"number")}${field("Confirmación","confirmation",h.confirmation)}</div>
+    `;
+  } else if(type==="hm-activity") {
+    const a = item || {};
+    title = isEdit?"Editar Actividad":"Agregar Actividad";
+    body = `
+      ${field("Actividad","name",a.name,"text","Tour Eiffel")}
+      <div class="row3">${field("Fecha","date",a.date,"date")}${field("Hora","time",a.time,"time")}${field("Costo","cost",a.cost,"number")}</div>
+      ${field("Ubicación","location",a.location)}
+      <label class="check-label"><input type="checkbox" name="booked" ${a.booked?'checked':''}> Ya reservado</label>
+    `;
+  } else if(type==="hm-check") {
+    title = "Nuevo Item";
+    body = field("Elemento","item","","text","Adaptador de corriente");
+  } else if(type==="hm-set") {
+    const hm = DATA.honeymoon||{};
+    title = "Configurar Honey Moon";
+    body = `
+      ${field("Destino","destination",hm.destination,"text","Maldivas, París, Japón...")}
+      <div class="row2">${field("Salida","startDate",hm.startDate,"date")}${field("Regreso","endDate",hm.endDate,"date")}</div>
+      ${field("Presupuesto","budget",hm.budget,"number")}
+      <div class="field"><label>Notas</label><textarea class="inp" name="notes">${hm.notes||''}</textarea></div>
+    `;
+  }
+  
+  document.getElementById("modal-container").innerHTML = `
+    <div class="modal-bg" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-head"><h3>${title}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+        <form onsubmit="submitModal(event,'${type}',${isEdit?JSON.stringify(item).replace(/"/g,'&quot;'):'null'})">${body}<button type="submit" class="btn-p" style="margin-top:8px">${isEdit?"Actualizar":"Agregar"}</button></form>
+      </div>
+    </div>
+  `;
+}
+
+function submitModal(e, type, editItem) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const get = k => fd.get(k)||"";
+  
+  if(type==="vendor") {
+    const v = {name:get("name"),category:get("category"),cost:Number(get("cost")||0),status:get("status"),contract:!!fd.get("contract"),notes:get("notes"),phone:get("phone")};
+    if(editItem) DATA.vendors=DATA.vendors.map(x=>x.id===editItem.id?{...x,...v}:x);
+    else DATA.vendors.push({...v,id:nid(DATA.vendors)});
+  } else if(type==="guest") {
+    const g = {name:get("name"),group:get("group"),rsvp:get("rsvp"),plusOne:!!fd.get("plusOne"),table:get("table"),dietary:get("dietary")};
+    if(editItem) DATA.guests=DATA.guests.map(x=>x.id===editItem.id?{...x,...g}:x);
+    else DATA.guests.push({...g,id:nid(DATA.guests)});
+  } else if(type==="task") {
+    DATA.tasks.push({text:get("text"),dueDate:get("dueDate"),category:get("category"),done:false,id:nid(DATA.tasks)});
+  } else if(type==="payment") {
+    DATA.payments.push({vendor:get("vendor"),amount:Number(get("amount")||0),date:get("date"),method:get("method"),concept:get("concept"),id:nid(DATA.payments)});
+  } else if(type==="budget-edit") {
+    DATA.budget=Number(get("budget")||0);DATA.weddingDate=get("weddingDate");DATA.weddingVenue=get("weddingVenue");
+    DATA.couple={name1:get("name1"),name2:get("name2")};
+  } else if(type==="hm-flight") {
+    const f={airline:get("airline"),from:get("from"),to:get("to"),date:get("date"),time:get("time"),cost:Number(get("cost")||0),flightNum:get("flightNum"),confirmation:get("confirmation")};
+    if(editItem) DATA.honeymoon.flights=DATA.honeymoon.flights.map(x=>x.id===editItem.id?{...x,...f}:x);
+    else DATA.honeymoon.flights.push({...f,id:Date.now()});
+  } else if(type==="hm-hotel") {
+    const h={name:get("name"),location:get("location"),checkIn:get("checkIn"),checkOut:get("checkOut"),cost:Number(get("cost")||0),confirmation:get("confirmation")};
+    if(editItem) DATA.honeymoon.hotels=DATA.honeymoon.hotels.map(x=>x.id===editItem.id?{...x,...h}:x);
+    else DATA.honeymoon.hotels.push({...h,id:Date.now()});
+  } else if(type==="hm-activity") {
+    const a={name:get("name"),date:get("date"),time:get("time"),location:get("location"),cost:Number(get("cost")||0),booked:!!fd.get("booked")};
+    if(editItem) DATA.honeymoon.activities=DATA.honeymoon.activities.map(x=>x.id===editItem.id?{...x,...a}:x);
+    else DATA.honeymoon.activities.push({...a,id:Date.now()});
+  } else if(type==="hm-check") {
+    DATA.honeymoon.documents.push({item:get("item"),done:false,id:Date.now()});
+  } else if(type==="hm-set") {
+    DATA.honeymoon.destination=get("destination");DATA.honeymoon.startDate=get("startDate");DATA.honeymoon.endDate=get("endDate");DATA.honeymoon.budget=Number(get("budget")||0);DATA.honeymoon.notes=get("notes");
+  }
+  
+  saveData(); closeModal(); render();
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+tryInit();
+</script>
+</body>
+</html>
