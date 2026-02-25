@@ -107,6 +107,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 .task-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:8px}
 .task-check{width:24px;height:24px;border-radius:7px;border:2px solid var(--border2);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .task-check.done{border-color:var(--green);background:var(--green);color:#fff}
+.task-check.done:hover{background:#fff;color:var(--green);border-color:var(--green)}
 .task-item.overdue{border-color:rgba(192,57,43,0.2)}
 
 /* Guest row */
@@ -330,10 +331,10 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
 let db = null;
 let DATA = {
   couple:{name1:"Yamil",name2:"Jacky"},
-  weddingDate:"2026-03-14",weddingVenue:"Por definir",budget:350000,
+  weddingDate:"",weddingVenue:"Por definir",budget:350000,
   vendors:[],guests:[],
   tasks:[
-    {id:1,text:"Definir fecha de la boda",done:true,dueDate:"2025-06-01",category:"General"},
+    {id:1,text:"Definir fecha de la boda",done:false,dueDate:"2025-06-01",category:"General"},
     {id:2,text:"Elegir venue / salón",done:false,dueDate:"2025-08-01",category:"Venue"},
     {id:3,text:"Contratar fotógrafo",done:false,dueDate:"2025-09-01",category:"Proveedores"},
     {id:4,text:"Elegir vestido de novia",done:false,dueDate:"2025-10-01",category:"Vestimenta"},
@@ -462,7 +463,7 @@ function render() {
   const daysLeft = dTo(DATA.weddingDate);
   
   // Sidebar nav
-  document.getElementById("sidebar-days").textContent = daysLeft > 0 ? `${daysLeft} días` : "¡Hoy!";
+  document.getElementById("sidebar-days").textContent = DATA.weddingDate ? (daysLeft > 0 ? `${daysLeft} días` : "¡Hoy!") : "Fecha por definir";
   document.getElementById("nav").innerHTML = TABS.map(t => 
     `<button class="nav-btn ${currentTab===t.id?'active':''}" onclick="switchTab('${t.id}')">${t.icon} ${t.label}</button>`
   ).join("");
@@ -491,12 +492,12 @@ function renderDashboard() {
           <svg width="90" height="90" viewBox="0 0 120 120"><defs><linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#E8CBA890" stroke-width="0.6"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#hg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#hg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#hg)" text-anchor="middle">J</text><line x1="26" y1="80" x2="54" y2="80" stroke="url(#hg)" stroke-width="0.5"/><circle cx="60" cy="80" r="1.2" fill="#C4956A"/><line x1="66" y1="80" x2="94" y2="80" stroke="url(#hg)" stroke-width="0.5"/></svg>
           <div>
             <h1>${d.couple.name1} <span>&</span> ${d.couple.name2}</h1>
-            <p class="hero-sub">📅 ${fmtD(d.weddingDate)} · 📍 ${d.weddingVenue}</p>
+            <p class="hero-sub">📅 ${d.weddingDate ? fmtD(d.weddingDate) : 'Fecha por definir'} · 📍 ${d.weddingVenue}</p>
           </div>
         </div>
         <div class="countdown">
-          <div class="countdown-num">${daysLeft>0?daysLeft:"🎉"}</div>
-          <div class="countdown-label">${daysLeft>0?"días para el gran día":"¡Felicidades!"}</div>
+          <div class="countdown-num">${d.weddingDate ? (daysLeft>0?daysLeft:"🎉") : "—"}</div>
+          <div class="countdown-label">${d.weddingDate ? (daysLeft>0?"días para el gran día":"¡Felicidades!") : '<button class="btn-s" style="font-size:12px;padding:6px 14px;margin-top:4px" onclick="openModal(\'budget-edit\')">Definir fecha</button>'}</div>
         </div>
       </div>
     </div>
@@ -625,8 +626,9 @@ function renderTasks() {
     <div style="margin-top:20px">
       ${pen.map(t=>{const ov=t.dueDate&&new Date(t.dueDate+"T23:59:59")<new Date();return`
         <div class="task-item${ov?' overdue':''}">
-          <button class="task-check" onclick="toggleTask(${t.id})"></button>
+          <button class="task-check" onclick="toggleTask(${t.id})" title="Marcar completada"></button>
           <div style="flex:1"><div style="font-size:14px;font-weight:500">${t.text}</div><div style="font-size:12px;color:${ov?'var(--red)':'var(--text3)'}">${fmtD(t.dueDate)} ${ov?'⚠ Vencida':''} · ${t.category}</div></div>
+          <button class="btn-icon" style="border:none;opacity:0.5" onclick="openModal('task',${JSON.stringify(t).replace(/"/g,'&quot;')})" title="Editar">✏️</button>
           <button class="btn-icon" style="color:var(--red);border:none;opacity:0.5" onclick="removeItem('tasks',${t.id})"><small>🗑</small></button>
         </div>
       `;}).join("")}
@@ -634,8 +636,9 @@ function renderTasks() {
     ${done.length>0?`<div style="margin-top:24px"><h3 style="font-family:var(--ffs);font-size:18px;color:var(--text3);margin:0 0 12px">Completadas (${done.length})</h3>
       ${done.map(t=>`
         <div class="task-item" style="opacity:0.7;background:#FAFAF7">
-          <button class="task-check done" onclick="toggleTask(${t.id})">✓</button>
-          <span style="font-size:14px;color:var(--text3);text-decoration:line-through;flex:1">${t.text}</span>
+          <button class="task-check done" onclick="toggleTask(${t.id})" title="Click para reactivar">✓</button>
+          <div style="flex:1"><div style="font-size:14px;color:var(--text3);text-decoration:line-through">${t.text}</div><div style="font-size:12px;color:var(--text3)">${fmtD(t.dueDate)} · ${t.category}</div></div>
+          <button class="btn-icon" style="border:none;opacity:0.4" onclick="openModal('task',${JSON.stringify(t).replace(/"/g,'&quot;')})" title="Editar">✏️</button>
           <button class="btn-icon" style="color:var(--red);border:none;opacity:0.4" onclick="removeItem('tasks',${t.id})"><small>🗑</small></button>
         </div>
       `).join("")}
@@ -756,10 +759,11 @@ function openModal(type, item) {
       <label class="check-label"><input type="checkbox" name="plusOne" ${g.plusOne?'checked':''}> +1 Acompañante</label>
     `;
   } else if(type==="task") {
-    title = "Nueva Tarea";
+    const tk = item || {};
+    title = isEdit?"Editar Tarea":"Nueva Tarea";
     body = `
-      ${field("Tarea","text","")}
-      <div class="row2">${field("Fecha límite","dueDate","","date")}${sel("Categoría","category","General",["General","Venue","Proveedores","Vestimenta","Invitaciones","Banquete","Decoración","Música","Legal","Luna de miel"])}</div>
+      ${field("Tarea","text",tk.text||"")}
+      <div class="row2">${field("Fecha límite","dueDate",tk.dueDate||"","date")}${sel("Categoría","category",tk.category||"General",["General","Venue","Proveedores","Vestimenta","Invitaciones","Banquete","Decoración","Música","Legal","Luna de miel"])}</div>
     `;
   } else if(type==="payment") {
     title = "Registrar Pago";
@@ -842,7 +846,9 @@ function submitModal(e, type, editItem) {
     if(editItem) DATA.guests=DATA.guests.map(x=>x.id===editItem.id?{...x,...g}:x);
     else DATA.guests.push({...g,id:nid(DATA.guests)});
   } else if(type==="task") {
-    DATA.tasks.push({text:get("text"),dueDate:get("dueDate"),category:get("category"),done:false,id:nid(DATA.tasks)});
+    const tk = {text:get("text"),dueDate:get("dueDate"),category:get("category")};
+    if(editItem) DATA.tasks=DATA.tasks.map(x=>x.id===editItem.id?{...x,...tk}:x);
+    else DATA.tasks.push({...tk,done:false,id:nid(DATA.tasks)});
   } else if(type==="payment") {
     DATA.payments.push({vendor:get("vendor"),amount:Number(get("amount")||0),date:get("date"),method:get("method"),concept:get("concept"),id:nid(DATA.payments)});
   } else if(type==="budget-edit") {
