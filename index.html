@@ -353,6 +353,7 @@ let DATA = {
 
 let currentTab = "dashboard";
 let guestFilter = "Todos";
+let guestTab = "Todos";
 
 // ═══════════════════════════════════════════
 //  HELPERS
@@ -556,21 +557,33 @@ function renderVendors() {
 
 function renderGuests() {
   const gs = DATA.guests||[];
-  const groups = ["Todos",...new Set(gs.map(g=>g.group))];
-  const filtered = guestFilter==="Todos"?gs:gs.filter(g=>g.group===guestFilter);
+  const n1=DATA.couple.name1||"Yamil";const n2=DATA.couple.name2||"Jacky";
+  const tabs=["Todos",n2,n1];
+  const tabGs = guestTab==="Todos"?gs:gs.filter(g=>g.side===guestTab);
+  const groups = ["Todos",...new Set(tabGs.map(g=>g.group))];
+  const filtered = guestFilter==="Todos"?tabGs:tabGs.filter(g=>g.group===guestFilter);
   const confirmed = gs.filter(g=>g.rsvp==="Confirmado").length;
+  const tabConf = tabGs.filter(g=>g.rsvp==="Confirmado").length;
   const rvC = {Pendiente:"var(--yellow)",Confirmado:"var(--green)",Declinado:"var(--red)","Sin respuesta":"var(--text2)"};
   return `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
-      <div><h2 style="font-family:var(--ffs);font-size:26px;margin:0 0 4px">Invitados</h2><p style="font-size:13px;color:var(--text2);margin:0">${confirmed} confirmados · ${gs.filter(g=>g.plusOne).length} +1</p></div>
+      <div><h2 style="font-family:var(--ffs);font-size:26px;margin:0 0 4px">Invitados</h2><p style="font-size:13px;color:var(--text2);margin:0">${confirmed} confirmados · ${gs.filter(g=>g.plusOne).length} +1 · Total: ${gs.length + gs.filter(g=>g.plusOne).length}</p></div>
       <button class="btn-p btn-add" onclick="openModal('guest')">+ Nuevo</button>
+    </div>
+    <div style="display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border2)">
+      ${tabs.map(t=>`<button onclick="guestTab='${t}';guestFilter='Todos';render()" style="padding:10px 20px;font-size:14px;font-weight:${guestTab===t?'600':'400'};font-family:var(--ffs);border:none;background:none;cursor:pointer;color:${guestTab===t?'var(--gold)':'var(--text3)'};border-bottom:2px solid ${guestTab===t?'var(--gold)':'transparent'};margin-bottom:-2px;transition:all 0.2s">${t==="Todos"?"Todos":("Invitados "+t)} <span style="font-family:var(--ffb);font-size:12px;opacity:0.7">(${t==="Todos"?gs.length:gs.filter(g=>g.side===t).length})</span></button>`).join("")}
     </div>
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
       ${groups.map(g=>`<button class="filter-btn ${guestFilter===g?'active':''}" onclick="guestFilter='${g}';render()">${g}</button>`).join("")}
     </div>
+    ${guestTab!=="Todos"?`<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="font-size:13px;color:var(--text2)">📋 ${tabGs.length} invitados</div>
+      <div style="font-size:13px;color:var(--green)">✓ ${tabConf} confirmados</div>
+      <div style="font-size:13px;color:var(--yellow)">⏳ ${tabGs.filter(g=>g.rsvp==="Pendiente").length} pendientes</div>
+    </div>`:""}
     ${filtered.map(g=>`
       <div class="guest-row">
-        <div style="flex:1"><span style="font-size:15px;font-weight:500">${g.name}</span><span style="font-size:12px;color:var(--text2);margin-left:8px">${g.group}${g.table?' · '+g.table:''}${g.plusOne?' · +1':''}${g.dietary?' · '+g.dietary:''}</span></div>
+        <div style="flex:1"><span style="font-size:15px;font-weight:500">${g.name}</span><span style="font-size:12px;color:var(--text2);margin-left:8px">${g.group}${g.table?' · '+g.table:''}${g.plusOne?' · +1':''}${g.dietary?' · '+g.dietary:''}${guestTab==="Todos"&&g.side?' · <span style="color:var(--gold)">'+g.side+'</span>':''}</span></div>
         <div style="display:flex;align-items:center;gap:8px">
           <select class="rsvp" style="background:${rvC[g.rsvp]}16;color:${rvC[g.rsvp]}" onchange="updateGuest(${g.id},this.value)">${["Pendiente","Confirmado","Declinado","Sin respuesta"].map(r=>`<option ${g.rsvp===r?'selected':''}>${r}</option>`).join("")}</select>
           <button class="btn-icon" style="color:var(--text2)" onclick='openModal("guest",${JSON.stringify(g).replace(/'/g,"\\'")})'><small>✏️</small></button>
@@ -751,11 +764,13 @@ function openModal(type, item) {
     `;
   } else if(type==="guest") {
     const g = item || {};
+    const n1=DATA.couple.name1||"Yamil";const n2=DATA.couple.name2||"Jacky";
     title = isEdit?"Editar Invitado":"Nuevo Invitado";
     body = `
       ${field("Nombre completo","name",g.name)}
-      <div class="row2">${sel("Grupo","group",g.group||"Familia Novia",["Familia Novia","Familia Novio","Amigos Novia","Amigos Novio","Trabajo","Otro"])}${sel("RSVP","rsvp",g.rsvp||"Pendiente",["Pendiente","Confirmado","Declinado","Sin respuesta"])}</div>
-      <div class="row2">${field("Mesa","table",g.table,"text","Mesa 5")}${field("Dieta","dietary",g.dietary)}</div>
+      <div class="row2">${sel("Invitado de","side",g.side||n2,[n2,n1,"Ambos"])}${sel("Grupo","group",g.group||"Familia Novia",["Familia Novia","Familia Novio","Amigos Novia","Amigos Novio","Trabajo","Otro"])}</div>
+      <div class="row2">${sel("RSVP","rsvp",g.rsvp||"Pendiente",["Pendiente","Confirmado","Declinado","Sin respuesta"])}${field("Mesa","table",g.table,"text","Mesa 5")}</div>
+      <div class="row2">${field("Dieta","dietary",g.dietary)}${""}</div>
       <label class="check-label"><input type="checkbox" name="plusOne" ${g.plusOne?'checked':''}> +1 Acompañante</label>
     `;
   } else if(type==="task") {
@@ -842,7 +857,7 @@ function submitModal(e, type, editItem) {
     if(editItem) DATA.vendors=DATA.vendors.map(x=>x.id===editItem.id?{...x,...v}:x);
     else DATA.vendors.push({...v,id:nid(DATA.vendors)});
   } else if(type==="guest") {
-    const g = {name:get("name"),group:get("group"),rsvp:get("rsvp"),plusOne:!!fd.get("plusOne"),table:get("table"),dietary:get("dietary")};
+    const g = {name:get("name"),group:get("group"),rsvp:get("rsvp"),plusOne:!!fd.get("plusOne"),table:get("table"),dietary:get("dietary"),side:get("side")};
     if(editItem) DATA.guests=DATA.guests.map(x=>x.id===editItem.id?{...x,...g}:x);
     else DATA.guests.push({...g,id:nid(DATA.guests)});
   } else if(type==="task") {
