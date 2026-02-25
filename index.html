@@ -48,6 +48,7 @@ input,select,textarea{font-family:var(--ff);color:var(--text)}
 .hero{background:linear-gradient(135deg,#3D2B1F,#5C3D2E,#6B4C3B);border-radius:20px;padding:44px 32px;margin-bottom:28px;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:0;right:0;width:280px;height:280px;background:radial-gradient(circle,rgba(196,149,106,0.15),transparent 70%);border-radius:50%}
 .hero-content{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;flex-wrap:wrap;gap:20px}
+.hero-top{display:flex;align-items:center;gap:20px}
 .hero h1{font-family:var(--ffs);font-size:30px;font-weight:600;color:#F5EDE4;line-height:1.1}
 .hero h1 span{color:#C4A882;font-style:italic;font-weight:400}
 .hero-sub{color:#C4A882;font-size:13px;margin-top:6px}
@@ -156,11 +157,88 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width
   .mob-header{display:flex!important}
   .sidebar{display:none;position:fixed!important;top:52px;left:0;width:250px!important;height:calc(100vh - 52px)!important;box-shadow:4px 0 20px rgba(0,0,0,0.1)}
   .sidebar.open{display:flex!important}
-  .main{padding:18px 14px!important}
-  .hero{padding:28px 20px}
-  .hero h1{font-size:24px}
-  .countdown-num{font-size:42px}
-  .row2,.row3{grid-template-columns:1fr}
+  .main{padding:16px 12px!important}
+  
+  /* Hero */
+  .hero{padding:24px 18px;margin-bottom:20px;border-radius:16px}
+  .hero-content{flex-direction:column;align-items:center;text-align:center;gap:16px}
+  .hero-top{flex-direction:column;align-items:center;gap:12px}
+  .hero h1{font-size:22px}
+  .hero-sub{font-size:12px}
+  .countdown{min-width:auto}
+  .countdown-num{font-size:40px}
+  .countdown-label{font-size:11px}
+  .hero svg{width:70px;height:70px}
+  
+  /* Stats */
+  .stats{gap:10px;margin-bottom:18px}
+  .stat{padding:14px 16px;min-width:calc(50% - 6px)!important;flex:1 1 calc(50% - 6px)!important}
+  .stat-val{font-size:22px}
+  .stat-label{font-size:10px}
+  .stat-sub{font-size:11px}
+  
+  /* Cards */
+  .card{padding:16px;border-radius:12px;margin-bottom:12px}
+  .card-title{font-size:17px;margin-bottom:10px}
+  
+  /* Vendor cards */
+  .vendor-card{padding:14px 16px;flex-direction:column;align-items:flex-start;gap:10px;border-radius:12px}
+  .vendor-card > div:last-child{width:100%;justify-content:space-between}
+  
+  /* Guest rows */
+  .guest-row{padding:12px 14px;flex-direction:column;align-items:flex-start;gap:8px;border-radius:10px}
+  .guest-row > div:last-child{width:100%;justify-content:flex-start}
+  
+  /* Item rows */
+  .item-row{flex-direction:column;align-items:flex-start;padding:12px 0;gap:6px}
+  .item-row > div:last-child{width:100%;justify-content:space-between}
+  
+  /* Task items */
+  .task-item{padding:10px 12px}
+  
+  /* Buttons */
+  .btn-p{padding:10px 18px;font-size:13px}
+  .btn-s{padding:8px 14px;font-size:13px}
+  
+  /* Forms */
+  .row2,.row3{grid-template-columns:1fr!important}
+  .modal{padding:22px 20px;width:95%;border-radius:14px}
+  .modal-head h3{font-size:19px}
+  .inp{padding:10px 12px;font-size:14px}
+  
+  /* Section headers */
+  h2{font-size:22px!important}
+  
+  /* HM Hero */
+  .hm-hero{padding:22px 18px;border-radius:16px}
+  .hm-hero > div{flex-direction:column!important;text-align:center;gap:12px!important}
+  .hm-hero .bar{margin-top:12px}
+  
+  /* Filter buttons */
+  .filter-btn{padding:5px 12px;font-size:12px}
+  
+  /* Checklist */
+  .checklist-item{padding:8px 0}
+  
+  /* Setup screen */
+  .setup{padding:16px;margin:30px auto}
+  .setup h1{font-size:28px}
+  .setup textarea{min-height:160px;font-size:12px}
+  .steps{padding:18px}
+  .steps ol{padding-left:16px;line-height:1.8;font-size:14px}
+  
+  /* General overflow fix */
+  body{overflow-x:hidden}
+  .app{overflow-x:hidden}
+  
+  /* Page header rows (title + button) */
+  [style*="justify-content:space-between"]{flex-wrap:wrap!important;gap:10px!important}
+  
+  /* Badge */
+  .badge{font-size:10px;padding:2px 8px}
+  
+  /* RSVP select */
+  .rsvp{font-size:11px;padding:4px 8px}
 }
 
 .hidden{display:none!important}
@@ -408,7 +486,7 @@ function renderDashboard() {
   return `
     <div class="hero">
       <div class="hero-content">
-        <div style="display:flex;align-items:center;gap:20px">
+        <div class="hero-top">
           <svg width="90" height="90" viewBox="0 0 120 120"><defs><linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="50%" stop-color="#C4956A"/><stop offset="100%" stop-color="#96704A"/></linearGradient></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#E8CBA890" stroke-width="0.6"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#hg)" stroke-width="1.4"/><text x="32" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#hg)" text-anchor="middle">Y</text><text x="88" y="72" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="url(#hg)" text-anchor="middle">J</text><line x1="26" y1="80" x2="54" y2="80" stroke="url(#hg)" stroke-width="0.5"/><circle cx="60" cy="80" r="1.2" fill="#C4956A"/><line x1="66" y1="80" x2="94" y2="80" stroke="url(#hg)" stroke-width="0.5"/></svg>
           <div>
             <h1>${d.couple.name1} <span>&</span> ${d.couple.name2}</h1>
