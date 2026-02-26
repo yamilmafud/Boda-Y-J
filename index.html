@@ -612,23 +612,23 @@ function tryInit() {
         if(!DATA.honeymoon) DATA.honeymoon = {destination:"",startDate:"",endDate:"",budget:80000,notes:"",flights:[],hotels:[],activities:[],documents:[]};
         ["flights","hotels","activities","documents"].forEach(k => { if(!Array.isArray(DATA.honeymoon[k])) DATA.honeymoon[k]=[]; });
         // Migration: import Yamil guests if not done yet
-        if(!DATA._yamilGuestsV2) {
+        if(!DATA._yamilGuestsV3) {
           const defaults = getDefaultGuests();
           const defaultMap = {};
           defaults.forEach(g => { defaultMap[g.id] = g; });
-          // Update existing guests from defaults with new fields
+          // Force update all guests from defaults with origin + relevance
           DATA.guests = (DATA.guests||[]).map(g => {
             if(defaultMap[g.id]) {
               const d = defaultMap[g.id];
-              return {...g, origin:d.origin, relevance:d.relevance, extraGuests:d.extraGuests, plusOne:d.plusOne};
+              return {...g, origin:d.origin||"MX", relevance:d.relevance||"Alta", extraGuests:d.extraGuests, plusOne:d.plusOne};
             }
-            return g;
+            return {...g, relevance:g.relevance||"Alta", origin:g.origin||"MX"};
           });
           // Add any new guests not yet present
           const existingIds = new Set(DATA.guests.map(g=>g.id));
           const toAdd = defaults.filter(g=>!existingIds.has(g.id));
           DATA.guests = [...DATA.guests, ...toAdd];
-          DATA._yamilGuestsV2 = true;
+          DATA._yamilGuestsV3 = true;
           saveData();
         }
       } else {
@@ -793,7 +793,7 @@ function renderGuests() {
   const tabGs = guestTab==="Todos"?gs:gs.filter(g=>g.side===guestTab);
   const groups = ["Todos",...new Set(tabGs.map(g=>g.group))];
   const filtered0 = guestFilter==="Todos"?tabGs:tabGs.filter(g=>g.group===guestFilter);
-  const filtered = guestRelevance==="Todos"?filtered0:filtered0.filter(g=>g.relevance===guestRelevance);
+  const filtered = guestRelevance==="Todos"?filtered0:filtered0.filter(g=>(g.relevance||"Alta")===guestRelevance);
   const confirmed = gs.filter(g=>g.rsvp==="Confirmado").length;
   const tabConf = tabGs.filter(g=>g.rsvp==="Confirmado").length;
   const rvC = {Pendiente:"var(--yellow)",Confirmado:"var(--green)",Declinado:"var(--red)","Sin respuesta":"var(--text2)"};
@@ -814,11 +814,11 @@ function renderGuests() {
       <div style="font-size:13px;color:var(--text2)">📋 ${tabGs.length} invitaciones · ${tabGs.reduce((s,g)=>s+1+(g.extraGuests||0),0)} personas</div>
       <div style="font-size:13px;color:var(--green)">✓ ${tabConf} confirmados</div>
       <div style="font-size:13px;color:var(--yellow)">⏳ ${tabGs.filter(g=>g.rsvp==="Pendiente").length} pendientes</div>
-      <div style="font-size:13px;color:var(--gold)">⭐ ${tabGs.filter(g=>g.relevance==="Alta").length} alta · ${tabGs.filter(g=>g.relevance==="Baja").length} baja</div>
+      <div style="font-size:13px;color:var(--gold)">⭐ ${tabGs.filter(g=>(g.relevance||"Alta")==="Alta").length} alta · ${tabGs.filter(g=>g.relevance==="Baja").length} baja</div>
     </div>`:""}
     ${filtered.map(g=>`
       <div class="guest-row">
-        <div style="flex:1"><span style="font-size:15px;font-weight:500">${g.name}</span>${g.relevance==="Alta"?'<span style="font-size:10px;background:#E8F5E9;color:var(--green);padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:600">Alta</span>':''}${g.relevance==="Baja"?'<span style="font-size:10px;background:#FFF3E0;color:#E8A838;padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:600">Baja</span>':''}<span style="font-size:12px;color:var(--text2);margin-left:8px">${g.group}${g.origin&&g.origin!=="MX"?' · 🌍'+g.origin:''}${g.table?' · '+g.table:''}${(g.extraGuests||0)>0?' · <b>+'+(g.extraGuests)+'</b>':''}${g.dietary?' · '+g.dietary:''}${guestTab==="Todos"&&g.side?' · <span style="color:var(--gold)">'+g.side+'</span>':''}</span></div>
+        <div style="flex:1"><span style="font-size:15px;font-weight:500">${g.name}</span> <span style="font-size:10px;padding:2px 8px;border-radius:4px;margin-left:4px;font-weight:600;${(g.relevance||'Alta')==='Alta'?'background:#E8F5E9;color:#4CAF50':'background:#FFF3E0;color:#E8A838'}">${g.relevance||'Alta'}</span><span style="font-size:12px;color:var(--text2);margin-left:8px">${g.group}${g.origin&&g.origin!=="MX"?' · 🌍'+g.origin:''}${g.table?' · '+g.table:''}${(g.extraGuests||0)>0?' · <b>+'+(g.extraGuests)+'</b>':''}${g.dietary?' · '+g.dietary:''}${guestTab==="Todos"&&g.side?' · <span style="color:var(--gold)">'+g.side+'</span>':''}</span></div>
         <div style="display:flex;align-items:center;gap:8px">
           <select class="rsvp" style="background:${rvC[g.rsvp]}16;color:${rvC[g.rsvp]}" onchange="updateGuest(${g.id},this.value)">${["Pendiente","Confirmado","Declinado","Sin respuesta"].map(r=>`<option ${g.rsvp===r?'selected':''}>${r}</option>`).join("")}</select>
           <button class="btn-icon" style="color:var(--text2)" onclick='openModal("guest",${JSON.stringify(g).replace(/'/g,"\\'")})'><small>✏️</small></button>
